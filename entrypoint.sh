@@ -62,7 +62,7 @@ curl \
   --data-binary @${NAME}${ARCHIVE_EXT} \
   -H 'Content-Type: application/octet-stream' \
   -H "Authorization: Bearer ${GITHUB_TOKEN}" \
-  "${UPLOAD_URL}?name=${NAME}.${ARCHIVE/tmp./}"
+  "${UPLOAD_URL}?name=${NAME}${ARCHIVE_EXT}"
 
 curl \
   -X POST \
