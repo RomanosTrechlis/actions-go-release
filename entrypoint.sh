@@ -5,7 +5,7 @@ set -eux
 getURLFromResponse() {
     r=$(echo ${response} | jq -c '.[]' | \
         while read i; do \ 
-            test=$(echo $i | jq .tag_name);  
+            test=$(echo ${i} | jq .tag_name);  
             if [ "$test" == "\"${RELEASE_NAME}\"" ]; then 
                 echo $ | jq .upload_url; 
             fi
@@ -27,8 +27,10 @@ getUploadURL() {
       -d "${CREATE_BODY}"
     )
 
-    exists=`echo $response |  jq -r '.errors.code'`
-    if [ $exists eq "already_exists" ]; then 
+    exists=$(echo ${response} |  jq .errors.code)
+    echo $exists
+    echo ${exists}
+    if [ $exists == "already_exists" ]; then 
         # echo "Release exists, trying to find it another way"
         response=$(curl \
             -H "Authorization: Bearer ${GITHUB_TOKEN}" \
