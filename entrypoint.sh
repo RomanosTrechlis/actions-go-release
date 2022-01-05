@@ -7,10 +7,28 @@ if [ -z "${CMD_PATH+x}" ]; then
   export CMD_PATH=""
 fi
 
-FILE_LIST=`/build.sh`
-
+PROJECT_ROOT="/go/src/github.com/${GITHUB_REPOSITORY}"
 PROJECT_NAME=$(basename $GITHUB_REPOSITORY)
 NAME="${NAME:-${PROJECT_NAME}_${RELEASE_NAME}}_${GOOS}_${GOARCH}"
+
+mkdir -p $PROJECT_ROOT
+rmdir $PROJECT_ROOT
+ln -s $GITHUB_WORKSPACE $PROJECT_ROOT
+cd $PROJECT_ROOT
+go get -v ./...
+
+EXT=''
+
+if [ $GOOS == 'windows' ]; then
+EXT='.exe'
+fi
+
+if [ -x "./build.sh" ]; then
+  FILE_LIST=`./build.sh "${CMD_PATH}"`
+else
+  go build "${CMD_PATH}"
+  FILE_LIST="${PROJECT_NAME}${EXT}"
+fi
 
 if [ -z "${EXTRA_FILES+x}" ]; then
 echo "::warning file=entrypoint.sh,line=22,col=1::EXTRA_FILES not set"
@@ -24,6 +42,8 @@ echo Enviroment
 echo Upload URL: $UPLOAD_URL
 echo Version: $RELEASE_NAME
 echo Name: $NAME
+echo Project root: $PROJECT_ROOT
+echo Project name: $PROJECT_NAME
 
 ARCHIVE_EXT=".tar.gz"
 MEDIA_TYPE='application/gzip'
