@@ -20,7 +20,6 @@ jobs:
       uses: ngs/go-release.action@v1.0.1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        UPLOAD_URL: ${{ steps.get_release.outputs.upload_url }}
         RELEASE_NAME: ${{ github.ref_name }}
         GOARCH: amd64
         GOOS: linux
@@ -34,9 +33,15 @@ jobs:
       uses: ngs/go-release.action@v1.0.1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        UPLOAD_URL: ${{ steps.get_release.outputs.upload_url }}
         RELEASE_NAME: ${{ github.ref_name }}
         GOARCH: amd64
         GOOS: windows
         EXTRA_FILES: "LICENSE"
 ```
+
+
+## TODO
+
++ refactor script
++ add extention on windows
++ add release notes

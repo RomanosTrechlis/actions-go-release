@@ -2,10 +2,19 @@
 
 set -eux
 
+PROJECT_ROOT="/go/src/github.com/${GITHUB_REPOSITORY}"
+PROJECT_NAME=$(basename $GITHUB_REPOSITORY)
+NAME="${NAME:-${PROJECT_NAME}_${RELEASE_NAME}}_${GOOS}_${GOARCH}"
+
+mkdir -p $PROJECT_ROOT
+rmdir $PROJECT_ROOT
+ln -s $GITHUB_WORKSPACE $PROJECT_ROOT
+cd $PROJECT_ROOT
+go get -v ./...
+
 BASE_URL="https://api.github.com/repos/${GITHUB_REPOSITORY}"
 
 getURLFromResponse() {
-    res=
     r=$(echo ${response} | tr '\r\n' ' ' | jq -c '.[]' |
         while read i; do
             test=$(echo ${i} | jq -r .tag_name);
@@ -50,28 +59,14 @@ if [ -z "${CMD_PATH+x}" ]; then
   export CMD_PATH="."
 fi
 
-PROJECT_ROOT="/go/src/github.com/${GITHUB_REPOSITORY}"
-PROJECT_NAME=$(basename $GITHUB_REPOSITORY)
-NAME="${NAME:-${PROJECT_NAME}_${RELEASE_NAME}}_${GOOS}_${GOARCH}"
-
-mkdir -p $PROJECT_ROOT
-rmdir $PROJECT_ROOT
-ln -s $GITHUB_WORKSPACE $PROJECT_ROOT
-cd $PROJECT_ROOT
-go get -v ./...
-
 EXT=''
 
 if [ $GOOS == 'windows' ]; then
 EXT='.exe'
 fi
 
-if [ -x "./build.sh" ]; then
-  FILE_LIST=`./build.sh "${CMD_PATH}"`
-else
-  go build "${CMD_PATH}"
-  FILE_LIST="${PROJECT_NAME}${EXT}"
-fi
+go build "${CMD_PATH}"
+FILE_LIST="${PROJECT_NAME}${EXT}"
 
 if [ -z "${EXTRA_FILES+x}" ]; then
     EXTRA_FILES=""
