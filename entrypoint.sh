@@ -50,7 +50,8 @@ getUploadURL() {
         echo $N
     else
         UPLOAD_URL=`echo "${response}" | jq -r '.upload_url'`
-        echo $UPLOAD_URL
+        N=`echo $UPLOAD_URL | sed 's/{?name,label}//g'`
+        echo $N
     fi
 }
 
