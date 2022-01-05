@@ -30,6 +30,10 @@ else
   FILE_LIST="${PROJECT_NAME}${EXT}"
 fi
 
+if [ -z "${EXTRA_FILES+x}" ]; then
+    EXTRA_FILES=""
+fi
+
 FILE_LIST="${FILE_LIST} ${EXTRA_FILES}"
 
 FILE_LIST=`echo "${FILE_LIST}" | awk '{$1=$1};1'`
