@@ -2,6 +2,47 @@
 
 set -eux
 
+getURLFromResponse() {
+    r=$(echo ${response} | jq -c '.[]' | \
+        while read i; do \ 
+            test=$(echo $i | jq .tag_name);  
+            if [ "$test" == "\"${RELEASE_NAME}\"" ]; then 
+                echo $ | jq .upload_url; 
+            fi
+        done
+    )
+    return $r
+}
+
+BASE_URL="https://api.github.com/repos/${GITHUB_REPOSITORY}"
+
+getUploadURL() {
+    echo "Creating release"
+    CREATE_BODY="{\"tag_name\": \"${RELEASE_NAME}\"}"
+    response=$(curl \
+      -X POST \
+      -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+      -H "Accept: application/vnd.github.v3+json" \
+      "${BASE_URL}/releases" \
+      -d "${CREATE_BODY}"
+    )
+
+    exists=`echo $response |  jq -r '.errors.code'`
+    if [ $exists eq "already_exists" ]; then 
+        echo "Release exists, trying to find it another way"
+        response=$(curl \
+            -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "${BASE_URL}/releases"
+        )
+        UPLOAD_URL=getURLFromResponse "$response"
+    else
+        UPLOAD_URL=`echo "${response}" | jq -r '.upload_url'`
+    fi
+    echo "Upload URL: $UPLOAD_URL"
+    return $UPLOAD_URL
+}
+
 if [ -z "${CMD_PATH+x}" ]; then
   echo "::warning file=entrypoint.sh,line=6,col=1::CMD_PATH not set"
   export CMD_PATH="."
@@ -57,20 +98,8 @@ fi
 
 CHECKSUM=$(md5sum ${NAME}${ARCHIVE_EXT} | cut -d ' ' -f 1)
 
+UPLOAD_URL=getUploadURL
 
-BASE_URL="https://api.github.com/repos/${GITHUB_REPOSITORY}"
-
-echo "Creating release"
-CREATE_BODY="{\"tag_name\": \"${RELEASE_NAME}\"}"
-response=$(curl \
-  -X POST \
-  -H "Authorization: Bearer ${GITHUB_TOKEN}" \
-  -H "Accept: application/vnd.github.v3+json" \
-  "${BASE_URL}/releases" \
-  -d "${CREATE_BODY}"
-)
-
-UPLOAD_URL=`echo "${response}" |  jq -r '.url'`
 
 curl \
   -X POST \
