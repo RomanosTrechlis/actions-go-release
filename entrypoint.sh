@@ -64,6 +64,7 @@ echo "Creating release"
 CREATE_BODY="{\"tag_name\": \"${RELEASE_NAME}\"}"
 response=$(curl \
   -X POST \
+  -H "Authorization: Bearer ${GITHUB_TOKEN}" \
   -H "Accept: application/vnd.github.v3+json" \
   "${BASE_URL}/releases" \
   -d "${CREATE_BODY}"
