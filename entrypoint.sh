@@ -30,10 +30,6 @@ else
   FILE_LIST="${PROJECT_NAME}${EXT}"
 fi
 
-if [ -z "${EXTRA_FILES+x}" ]; then
-echo "::warning file=entrypoint.sh,line=22,col=1::EXTRA_FILES not set"
-fi
-
 FILE_LIST="${FILE_LIST} ${EXTRA_FILES}"
 
 FILE_LIST=`echo "${FILE_LIST}" | awk '{$1=$1};1'`
