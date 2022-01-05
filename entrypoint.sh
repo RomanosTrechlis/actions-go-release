@@ -3,21 +3,21 @@
 set -eux
 
 getURLFromResponse() {
-    r=$(echo ${response} | jq -c '.[]' | \
-        while read i; do \ 
-            test=$(echo ${i} | jq .tag_name);  
-            if [ "$test" == "\"${RELEASE_NAME}\"" ]; then 
-                echo $ | jq .upload_url; 
+    res=
+    r=$(echo ${response} | tr '\r\n' ' ' | jq -c '.[]' |
+        while read i; do
+            test=$(echo ${i} | jq -r .tag_name);
+            if [ "$test" = "${RELEASE_NAME}" ]; then
+               res=`echo "$i" | jq -r .upload_url`
+               echo $res
+               break;
             fi
         done
     )
     echo $r
 }
 
-BASE_URL="https://api.github.com/repos/${GITHUB_REPOSITORY}"
-
 getUploadURL() {
-    # echo "Creating release"
     CREATE_BODY="{\"tag_name\": \"${RELEASE_NAME}\"}"
     response=$(curl \
       -X POST \
@@ -27,22 +27,23 @@ getUploadURL() {
       -d "${CREATE_BODY}"
     )
 
-    exists=$(echo ${response} |  jq .errors.code)
-    echo $exists
-    echo ${exists}
-    if [ $exists == "already_exists" ]; then 
-        # echo "Release exists, trying to find it another way"
+    exists=$(echo ${response} |  jq -r .errors[0].code)
+    if [ "${exists}" = "already_exists" ]; then 
         response=$(curl \
             -H "Authorization: Bearer ${GITHUB_TOKEN}" \
             -H "Accept: application/vnd.github.v3+json" \
             "${BASE_URL}/releases"
         )
         UPLOAD_URL=$(getURLFromResponse $response)
+        N=`echo $UPLOAD_URL | sed 's/{?name,label}//g'`
+        echo $N
     else
         UPLOAD_URL=`echo "${response}" | jq -r '.upload_url'`
+        echo $UPLOAD_URL
     fi
-    echo $UPLOAD_URL
 }
+
+UPLOAD_URL=$(getUploadURL)
 
 if [ -z "${CMD_PATH+x}" ]; then
   echo "::warning file=entrypoint.sh,line=6,col=1::CMD_PATH not set"
@@ -77,30 +78,19 @@ if [ -z "${EXTRA_FILES+x}" ]; then
 fi
 
 FILE_LIST="${FILE_LIST} ${EXTRA_FILES}"
-
 FILE_LIST=`echo "${FILE_LIST}" | awk '{$1=$1};1'`
-
-echo Enviroment
-echo Upload URL: $UPLOAD_URL
-echo Version: $RELEASE_NAME
-echo Name: $NAME
-echo Project root: $PROJECT_ROOT
-echo Project name: $PROJECT_NAME
 
 ARCHIVE_EXT=".tar.gz"
 MEDIA_TYPE='application/gzip'
 if [ $GOOS == 'windows' ]; then
-ARCHIVE_EXT=".zip"
-MEDIA_TYPE='application/zip'
-zip -9r ${NAME}${ARCHIVE_EXT} ${FILE_LIST}
+    ARCHIVE_EXT=".zip"
+    MEDIA_TYPE='application/zip'
+    zip -9r ${NAME}${ARCHIVE_EXT} ${FILE_LIST}
 else
-tar cvfz ${NAME}${ARCHIVE_EXT} ${FILE_LIST}
+    tar cvfz ${NAME}${ARCHIVE_EXT} ${FILE_LIST}
 fi
 
 CHECKSUM=$(md5sum ${NAME}${ARCHIVE_EXT} | cut -d ' ' -f 1)
-
-UPLOAD_URL=$(getUploadURL)
-
 
 curl \
   -X POST \
