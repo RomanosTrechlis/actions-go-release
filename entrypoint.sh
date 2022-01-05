@@ -66,7 +66,8 @@ response=$(curl \
   -X POST \
   -H "Accept: application/vnd.github.v3+json" \
   "${BASE_URL}/releases" \
-  -d ${CREATE_BODY})
+  -d "${CREATE_BODY}"
+)
 
 UPLOAD_URL=`echo "${response}" |  jq -r '.url'`
 
