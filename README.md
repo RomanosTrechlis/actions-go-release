@@ -1,6 +1,8 @@
 # Github actions Go release
 
-```md
+Playing around with Github actions
+
+```yml
 on:
   push:
     # Sequence of patterns matched against refs/tags
