@@ -11,13 +11,13 @@ getURLFromResponse() {
             fi
         done
     )
-    return $r
+    echo $r
 }
 
 BASE_URL="https://api.github.com/repos/${GITHUB_REPOSITORY}"
 
 getUploadURL() {
-    echo "Creating release"
+    # echo "Creating release"
     CREATE_BODY="{\"tag_name\": \"${RELEASE_NAME}\"}"
     response=$(curl \
       -X POST \
@@ -29,18 +29,17 @@ getUploadURL() {
 
     exists=`echo $response |  jq -r '.errors.code'`
     if [ $exists eq "already_exists" ]; then 
-        echo "Release exists, trying to find it another way"
+        # echo "Release exists, trying to find it another way"
         response=$(curl \
             -H "Authorization: Bearer ${GITHUB_TOKEN}" \
             -H "Accept: application/vnd.github.v3+json" \
             "${BASE_URL}/releases"
         )
-        UPLOAD_URL=getURLFromResponse "$response"
+        UPLOAD_URL=$(getURLFromResponse $response)
     else
         UPLOAD_URL=`echo "${response}" | jq -r '.upload_url'`
     fi
-    echo "Upload URL: $UPLOAD_URL"
-    return $UPLOAD_URL
+    echo $UPLOAD_URL
 }
 
 if [ -z "${CMD_PATH+x}" ]; then
@@ -98,7 +97,7 @@ fi
 
 CHECKSUM=$(md5sum ${NAME}${ARCHIVE_EXT} | cut -d ' ' -f 1)
 
-UPLOAD_URL=getUploadURL
+UPLOAD_URL=$(getUploadURL)
 
 
 curl \
