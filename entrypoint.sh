@@ -61,7 +61,7 @@ CHECKSUM=$(md5sum ${NAME}${ARCHIVE_EXT} | cut -d ' ' -f 1)
 BASE_URL="https://api.github.com/repos/${GITHUB_REPOSITORY}"
 
 echo "Creating release"
-CREATE_BODY="{\"tag_name\": ${RELEASE_NAME}}"
+CREATE_BODY="{\"tag_name\": \"${RELEASE_NAME}\"}"
 response=$(curl \
   -X POST \
   -H "Accept: application/vnd.github.v3+json" \
