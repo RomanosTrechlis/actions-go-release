@@ -2,6 +2,8 @@
 
 set -eux
 
+BASE_URL="https://api.github.com/repos/${GITHUB_REPOSITORY}"
+
 getURLFromResponse() {
     res=
     r=$(echo ${response} | tr '\r\n' ' ' | jq -c '.[]' |
@@ -42,8 +44,6 @@ getUploadURL() {
         echo $UPLOAD_URL
     fi
 }
-
-UPLOAD_URL=$(getUploadURL)
 
 if [ -z "${CMD_PATH+x}" ]; then
   echo "::warning file=entrypoint.sh,line=6,col=1::CMD_PATH not set"
@@ -91,6 +91,9 @@ else
 fi
 
 CHECKSUM=$(md5sum ${NAME}${ARCHIVE_EXT} | cut -d ' ' -f 1)
+
+UPLOAD_URL=$(getUploadURL)
+echo $UPLOAD_URL
 
 curl \
   -X POST \
