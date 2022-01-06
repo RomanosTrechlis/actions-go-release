@@ -82,6 +82,8 @@ PROJECT_ROOT="/go/src/github.com/${GITHUB_REPOSITORY}"
 PROJECT_NAME=$(basename $GITHUB_REPOSITORY)
 NAME="${NAME:-${PROJECT_NAME}_${RELEASE_NAME}}_${GOOS}_${GOARCH}"
 
+setupGo
+
 mkdir -p $PROJECT_ROOT
 rmdir $PROJECT_ROOT
 ln -s $GITHUB_WORKSPACE $PROJECT_ROOT
@@ -98,7 +100,6 @@ if [ "$GOOS" = "windows" ]; then
 EXT='.exe'
 fi
 
-setupGo
 
 go build "${CMD_PATH}"
 FILE_LIST="${PROJECT_NAME}${EXT}"
