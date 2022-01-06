@@ -143,5 +143,5 @@ curl \
   -X POST \
   -H "Accept: application/vnd.github.v3+json" \
   -H "Authorization: Bearer ${GITHUB_TOKEN}" \
-  "${BASE_URL}/releases/generate-notes \
+  "${BASE_URL}/releases/generate-notes" \
   -d "${CREATE_BODY}"
