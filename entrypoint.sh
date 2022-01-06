@@ -2,17 +2,41 @@
 
 set -eux
 
-PROJECT_ROOT="/go/src/github.com/${GITHUB_REPOSITORY}"
-PROJECT_NAME=$(basename $GITHUB_REPOSITORY)
-NAME="${NAME:-${PROJECT_NAME}_${RELEASE_NAME}}_${GOOS}_${GOARCH}"
-
-mkdir -p $PROJECT_ROOT
-rmdir $PROJECT_ROOT
-ln -s $GITHUB_WORKSPACE $PROJECT_ROOT
-cd $PROJECT_ROOT
-go get -v ./...
-
 BASE_URL="https://api.github.com/repos/${GITHUB_REPOSITORY}"
+CREATE_BODY="{\"tag_name\": \"${RELEASE_NAME}\"}"
+
+beginswith() { 
+    case $2 in "$1"*) true;; *) false;; esac; 
+}
+
+setupGo() {
+    GO_URL="https://dl.google.com/go/$(curl https://go.dev/VERSION?m=text).linux-amd64.tar.gz"
+    if [ -z ${GO_VERSION+x} ]; then
+        GO_URL=$GO_URL
+    elif [ "${GO_VERSION}" = "1.17" ]; then
+        GO_URL="https://go.dev/dl/go1.17.linux-amd64.tar.gz"
+    elif [ "${GO_VERSION}" = "1.16" ]; then
+        GO_URL="https://go.dev/dl/go1.16.7.linux-amd64.tar.gz"
+    elif [ "${GO_VERSION}" = "1.15" ]; then
+        GO_URL="https://go.dev/dl/go1.15.10.linux-amd64.tar.gz"
+    elif [ "${GO_VERSION}" = "1.14" ]; then
+        GO_URL="https://go.dev/dl/go1.14.15.linux-amd64.tar.gz"
+    elif [ "${GO_VERSION}" = "1.13" ]; then
+        GO_URL="https://dl.google.com/go/go1.13.8.linux-amd64.tar.gz"
+    elif beginswith https "${GO_VERSION}"; then
+        GO_URL=${GO_VERSION}
+    fi
+
+    echo $GO_URL
+    wget ${GO_URL} -O go-linux.tar.gz 
+    tar -zxf go-linux.tar.gz
+    mv go /usr/local/
+    mkdir -p /go/bin /go/src /go/pkg
+
+    export GO_HOME=/usr/local/go
+    export GOPATH=/go
+    export PATH=${GOPATH}/bin:${GO_HOME}/bin/:$PATH
+}
 
 getURLFromResponse() {
     r=$(echo ${response} | tr '\r\n' ' ' | jq -c '.[]' |
@@ -29,7 +53,6 @@ getURLFromResponse() {
 }
 
 getUploadURL() {
-    CREATE_BODY="{\"tag_name\": \"${RELEASE_NAME}\"}"
     response=$(curl \
       -X POST \
       -H "Authorization: Bearer ${GITHUB_TOKEN}" \
@@ -55,16 +78,27 @@ getUploadURL() {
     fi
 }
 
+PROJECT_ROOT="/go/src/github.com/${GITHUB_REPOSITORY}"
+PROJECT_NAME=$(basename $GITHUB_REPOSITORY)
+NAME="${NAME:-${PROJECT_NAME}_${RELEASE_NAME}}_${GOOS}_${GOARCH}"
+
+mkdir -p $PROJECT_ROOT
+rmdir $PROJECT_ROOT
+ln -s $GITHUB_WORKSPACE $PROJECT_ROOT
+cd $PROJECT_ROOT
+go get -v ./...
+
 if [ -z "${CMD_PATH+x}" ]; then
   echo "::warning file=entrypoint.sh,line=6,col=1::CMD_PATH not set"
   export CMD_PATH="."
 fi
 
 EXT=''
-
-if [ $GOOS == 'windows' ]; then
+if [ "$GOOS" = "windows" ]; then
 EXT='.exe'
 fi
+
+setupGo
 
 go build "${CMD_PATH}"
 FILE_LIST="${PROJECT_NAME}${EXT}"
@@ -78,7 +112,7 @@ FILE_LIST=`echo "${FILE_LIST}" | awk '{$1=$1};1'`
 
 ARCHIVE_EXT=".tar.gz"
 MEDIA_TYPE='application/gzip'
-if [ $GOOS == 'windows' ]; then
+if [ "$GOOS" = "windows" ]; then
     ARCHIVE_EXT=".zip"
     MEDIA_TYPE='application/zip'
     zip -9r ${NAME}${ARCHIVE_EXT} ${FILE_LIST}
@@ -89,7 +123,6 @@ fi
 CHECKSUM=$(md5sum ${NAME}${ARCHIVE_EXT} | cut -d ' ' -f 1)
 
 UPLOAD_URL=$(getUploadURL)
-echo $UPLOAD_URL
 
 curl \
   -X POST \
@@ -104,3 +137,10 @@ curl \
   -H 'Content-Type: text/plain' \
   -H "Authorization: Bearer ${GITHUB_TOKEN}" \
   "${UPLOAD_URL}?name=${NAME}_checksum.txt"
+
+curl \
+  -X POST \
+  -H "Accept: application/vnd.github.v3+json" \
+  -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+  "${BASE_URL}/releases/generate-notes \
+  -d "${CREATE_BODY}"
