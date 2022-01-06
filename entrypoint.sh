@@ -13,6 +13,7 @@ cd $PROJECT_ROOT
 go get -v ./...
 
 BASE_URL="https://api.github.com/repos/${GITHUB_REPOSITORY}"
+CREATE_BODY="{\"tag_name\": \"${RELEASE_NAME}\"}"
 
 getURLFromResponse() {
     r=$(echo ${response} | tr '\r\n' ' ' | jq -c '.[]' |
@@ -29,7 +30,6 @@ getURLFromResponse() {
 }
 
 getUploadURL() {
-    CREATE_BODY="{\"tag_name\": \"${RELEASE_NAME}\"}"
     response=$(curl \
       -X POST \
       -H "Authorization: Bearer ${GITHUB_TOKEN}" \
@@ -89,7 +89,6 @@ fi
 CHECKSUM=$(md5sum ${NAME}${ARCHIVE_EXT} | cut -d ' ' -f 1)
 
 UPLOAD_URL=$(getUploadURL)
-echo $UPLOAD_URL
 
 curl \
   -X POST \
@@ -104,3 +103,10 @@ curl \
   -H 'Content-Type: text/plain' \
   -H "Authorization: Bearer ${GITHUB_TOKEN}" \
   "${UPLOAD_URL}?name=${NAME}_checksum.txt"
+
+curl \
+  -X POST \
+  -H "Accept: application/vnd.github.v3+json" \
+  -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+  "${BASE_URL}/releases/generate-notes \
+  -d "${CREATE_BODY}"
