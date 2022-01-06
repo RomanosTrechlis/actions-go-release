@@ -37,6 +37,7 @@ jobs:
         GOARCH: amd64
         GOOS: windows
         EXTRA_FILES: "LICENSE"
+        GO_VERSION: 1.17 | 1.16 | 1.15 | 1.14 | 1.13 | https://dl.google.com/go/go1.13.8.linux-amd64.tar.gz
 ```
 
 
