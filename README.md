@@ -36,9 +36,10 @@ jobs:
       - uses: RomanosTrechlis/actions-go-release@v0.4
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          RELEASE_NAME: ${{ github.ref_name }}
-          GOOS: ${{ matrix.goos }}
-          GOARCH: ${{ matrix.goarch }}
+        with:
+          release_name: ${{ github.ref_name }}
+          goos: ${{ matrix.goos }}
+          goarch: ${{ matrix.goarch }}
 ```
 
 ## TODO

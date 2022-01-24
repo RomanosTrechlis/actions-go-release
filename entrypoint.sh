@@ -3,7 +3,7 @@
 set -eux
 
 BASE_URL="https://api.github.com/repos/${GITHUB_REPOSITORY}"
-CREATE_BODY="{\"tag_name\": \"${RELEASE_NAME}\"}"
+CREATE_BODY="{\"tag_name\": \"${INPUT_RELEASE_NAME}\"}"
 
 beginsWith() {
     case $2 in "$1"*) true;; *) false;; esac; 
@@ -41,7 +41,7 @@ getURLFromResponse() {
     r=$(echo "${response}" | tr '\r\n' ' ' | jq -c '.[]' |
         while read -r i; do
             test=$(echo "${i}" | jq -r .tag_name);
-            if [ "$test" = "${RELEASE_NAME}" ]; then
+            if [ "$test" = "${INPUT_RELEASE_NAME}" ]; then
                res=$(echo "$i" | jq -r .upload_url)
                echo "$res"
                break;
@@ -79,7 +79,7 @@ getUploadURL() {
 
 PROJECT_ROOT="/go/src/github.com/${GITHUB_REPOSITORY}"
 PROJECT_NAME=$(basename "$GITHUB_REPOSITORY")
-NAME="${NAME:-${PROJECT_NAME}_${RELEASE_NAME}}_${GOOS}_${GOARCH}"
+NAME="${NAME:-${PROJECT_NAME}_${INPUT_RELEASE_NAME}}_${INPUT_GOOS}_${INPUT_GOARCH}"
 
 setupGo
 
@@ -95,7 +95,7 @@ if [ -z "${CMD_PATH+x}" ]; then
 fi
 
 EXT=''
-if [ "$GOOS" = "windows" ]; then
+if [ "$INPUT_GOOS" = "windows" ]; then
 EXT='.exe'
 fi
 
@@ -111,7 +111,7 @@ FILE_LIST="${FILE_LIST} ${EXTRA_FILES}"
 FILE_LIST=$(echo "${FILE_LIST}" | awk '{$1=$1};1')
 
 ARCHIVE_EXT=".tar.gz"
-if [ "$GOOS" = "windows" ]; then
+if [ "$INPUT_GOOS" = "windows" ]; then
     ARCHIVE_EXT=".zip"
     zip -9r "${NAME}"${ARCHIVE_EXT} "${FILE_LIST}"
 else
