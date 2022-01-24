@@ -100,7 +100,7 @@ EXT='.exe'
 fi
 
 
-go build "${CMD_PATH}"
+GOOS=${INPUT_GOOS} GOARCH=${INPUT_GOARCH} go build "${CMD_PATH}"
 FILE_LIST="${PROJECT_NAME}${EXT}"
 
 ls -l
