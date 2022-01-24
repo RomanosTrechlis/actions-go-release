@@ -113,7 +113,7 @@ FILE_LIST=$(echo "${FILE_LIST}" | awk '{$1=$1};1')
 ARCHIVE_EXT=".tar.gz"
 if [ "$INPUT_GOOS" = "windows" ]; then
     ARCHIVE_EXT=".zip"
-    zip -9r "${NAME}"${ARCHIVE_EXT} "${FILE_LIST}"
+    zip -9r "${NAME}"${ARCHIVE_EXT} . -i "${FILE_LIST}"
 else
     tar cvfz "${NAME}"${ARCHIVE_EXT} "${FILE_LIST}"
 fi
