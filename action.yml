@@ -1,0 +1,20 @@
+# action.yaml
+name: 'actions-go-release'
+description: 'Go releaser for Github actions'
+inputs:
+  release_name:
+    description: "Release's name"
+    required: true
+  goos:
+    description: "Go's target operating system"
+    required: true
+  goarch:
+    description: "Go's target architecture"
+    required: true
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
+  args:
+    - ${{ inputs.release_name }}
+    - ${{ inputs.goos }}
+    - ${{ inputs.goarch }}
