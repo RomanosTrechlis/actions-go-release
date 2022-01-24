@@ -1,6 +1,11 @@
 # action.yaml
 name: 'actions-go-release'
 description: 'Go releaser for Github actions'
+author: 'Romanos Trechlis'
+branding:
+  color: 'blue'
+  icon: 'package'
+
 inputs:
   release_name:
     description: "Release's name"
